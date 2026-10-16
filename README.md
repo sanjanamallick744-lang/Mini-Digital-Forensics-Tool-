@@ -1,209 +1,161 @@
-# 🔍 Mini Digital Forensics Tool
+# Digital Forensics & Security Log Analyzer
 
-## 📌 Overview
+## 📌 Project Overview
 
-**Mini Digital Forensics Tool** is a beginner-friendly cybersecurity project developed using **C++**. The tool analyzes text-based forensic log files to identify and summarize potentially suspicious activities.
+The **Digital Forensics & Security Log Analyzer** is a C++ cybersecurity project that analyzes system log entries to identify suspicious activities and potential security threats. It detects failed login attempts, unauthorized access, malware indicators, privilege escalation, ransomware indicators, data exfiltration, and possible brute-force activity.
 
-It searches the log file for predefined security-related keywords such as **failed login attempts, unauthorized access, suspicious activity, malware, and attacks**. The tool counts these events, displays the suspicious log entries, and generates a basic forensic investigation report.
+The tool generates a detailed forensic report containing event categories, severity levels, IP addresses, risk scores, and recommended actions.
 
-This project demonstrates the practical application of **C++ file handling, string processing, log analysis, and fundamental digital forensics concepts**.
+## 🚀 Features
 
----
-
-## 🎯 Objectives
-
-* Analyze forensic log files automatically.
-* Identify potentially suspicious activities.
-* Count different types of security events.
-* Display relevant suspicious log entries.
-* Generate a basic forensic investigation report.
-* Understand how log analysis can support digital investigations.
-
----
-
-## ✨ Features
-
-* 📂 Read data from a forensic log file.
-* 🔎 Search for predefined security keywords.
-* 📊 Count suspicious events.
-* 🚨 Detect failed login attempts.
-* 🔐 Identify unauthorized access attempts.
-* ⚠️ Detect suspicious activities.
-* 🦠 Search for malware-related entries.
-* 💥 Search for attack-related entries.
-* 📄 Generate a forensic report.
-* 💻 Simple console-based interface.
-
----
+- **Log Analysis:** Reads log entries from `forensic_log.txt`.
+- **Sample Data:** Uses built-in sample logs if the input file is unavailable.
+- **Threat Detection:** Identifies suspicious activities and potential security threats.
+- **Severity Classification:** Categorizes detected events as LOW, MEDIUM, HIGH, or CRITICAL.
+- **IP Address Extraction:** Extracts basic IPv4 address patterns from log entries.
+- **Brute-Force Detection:** Flags repeated failed login attempts from the same detected IP address.
+- **Risk Scoring:** Assigns rule-based risk points to detected events.
+- **Security Recommendations:** Provides suggested actions for investigating suspicious activities.
+- **Automated Reporting:** Saves analysis results to `forensic_report.txt`.
+- **Event Statistics:** Displays a summary of detected security indicators.
 
 ## 🛠️ Technologies Used
 
-* **Programming Language:** C++
-* **IDE:** Dev-C++ / Visual Studio Code
-* **Concepts:**
+- **Programming Language:** C++
+- **File Handling:** `ifstream` and `ofstream`
+- **Data Structures:** Vectors, maps, and structures
+- **Libraries:** `iostream`, `fstream`, `string`, `vector`, `map`, `cctype`, `ctime`, and `cstdlib`
+- **Development Environment:** VS Code / Dev-C++
 
-  * File Handling
-  * Strings
-  * Loops
-  * Conditional Statements
-  * Functions
-  * Log Analysis
-
----
-
-## 📁 Project Structure
+## 📂 Project Structure
 
 ```text
-Mini-Digital-Forensics-Tool/
+Digital-Forensics-Analyzer/
 │
-├── main.cpp
+├── digital_forensics.cpp
 ├── forensic_log.txt
 ├── forensic_report.txt
 └── README.md
 ```
 
----
+`forensic_log.txt` is the input file and is optional. If it is missing, the program uses built-in sample logs.
 
-## ⚙️ How It Works
+`forensic_report.txt` is automatically generated when the analysis finishes.
 
-The tool follows these basic steps:
+## ⚙️ How to Run
 
-```text
-Forensic Log File
-       ↓
-Read Log Entries
-       ↓
-Search Security Keywords
-       ↓
-Identify Suspicious Entries
-       ↓
-Count Security Events
-       ↓
-Generate Forensic Report
-```
-
----
-
-## 🚀 How to Run
-
-### 1. Clone the repository
+### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/your-username/Mini-Digital-Forensics-Tool.git
+git clone YOUR_REPOSITORY_URL
+cd Digital-Forensics-Analyzer
 ```
 
-### 2. Open the project
+Replace `YOUR_REPOSITORY_URL` with your GitHub repository URL.
 
-Open `main.cpp` using **Dev-C++**, **Visual Studio Code**, or another C++ IDE.
+### 2. Compile the Program
 
-### 3. Add the log file
+Make sure a C++ compiler such as GCC is installed.
 
-Make sure `forensic_log.txt` is present in the same folder as the executable.
+```bash
+g++ digital_forensics.cpp -o digital_forensics
+```
 
-### 4. Compile the program
+### 3. Run the Program
 
-Compile and run `main.cpp`.
+**Windows PowerShell:**
 
-### 5. View the report
+```powershell
+.\digital_forensics.exe
+```
 
-After analysis, the program generates:
+**Linux / macOS / Git Bash:**
+
+```bash
+./digital_forensics
+```
+
+### 4. Provide Input Logs
+
+Create a file named `forensic_log.txt` in the program's working directory and add entries such as:
 
 ```text
-forensic_report.txt
+10:20 Login successful - User: admin - IP: 192.168.1.10
+10:25 Failed login - User: unknown - IP: 203.0.113.15
+10:26 Failed login - User: unknown - IP: 203.0.113.15
+10:27 Failed login - User: unknown - IP: 203.0.113.15
+10:30 Suspicious connection - IP: 198.51.100.8
+10:35 Unauthorized access attempt - IP: 198.51.100.8
+10:45 Malware detected on workstation
+11:00 Privilege escalation detected - User: guest
+11:05 Ransomware indicator detected
+11:10 Data exfiltration alert
 ```
 
-This file contains the summary of detected suspicious activities.
+## 📊 Analysis and Reporting
 
----
+The program displays a summary containing:
 
-## 📝 Sample Log File
+- Total log entries
+- Suspicious events
+- Failed login attempts
+- Possible brute-force sources
+- Unauthorized access events
+- Malware indicators
+- Attack indicators
+- Privilege escalation events
+- Critical-category events
+- Data exfiltration indicators
+- Aggregate risk score
 
-Example `forensic_log.txt`:
+The detailed report includes the original log entry, detected category, severity, extracted IP address, risk points, recommended action, and failed-login counts by IP.
 
-```text
-10:20 Login successful - User: admin
-10:25 Failed login attempt - User: unknown
-10:27 Failed login attempt - User: unknown
-10:30 Suspicious connection detected
-10:35 Unauthorized access attempt
-10:40 Login successful - User: sanjana
-10:45 Malware detected in system
-```
+## 🔍 Detection Categories
 
----
+| Category | Purpose |
+|---|---|
+| Failed Login | Identifies unsuccessful login attempts |
+| Suspicious Activity | Flags suspicious or unauthorized events |
+| Malware Indicators | Detects malware-related keywords |
+| Attack Indicators | Identifies attack-related log messages |
+| Privilege Escalation | Flags potential privilege misuse |
+| Ransomware Indicators | Identifies ransomware-related alerts |
+| Data Exfiltration | Flags possible unauthorized data transfers |
+| Possible Brute-Force Activity | Identifies repeated failed logins from one IP |
 
-## 📊 Sample Output
+## 🎯 Learning Outcomes
 
-```text
-========== DIGITAL FORENSICS REPORT ==========
+- Understanding digital forensics and security log analysis
+- Applying C++ file handling to cybersecurity tasks
+- Using strings and pattern matching for threat identification
+- Working with vectors, maps, and structures
+- Implementing basic rule-based threat classification
+- Generating automated security reports
+- Understanding risk scoring and incident investigation
 
-Total Log Entries: 7
+## ⚠️ Limitations
 
-Suspicious Events Found: 5
+This project uses predefined keyword-based detection rules and is intended for educational purposes. Its findings are security indicators, not proof of a confirmed attack. IP extraction and risk scoring are basic implementations and require further validation before real-world use.
 
-Failed Login Attempts: 2
-Suspicious Events: 1
-Unauthorized Events: 1
-Malware Events: 1
-Attack Events: 0
+## 🔮 Future Enhancements
 
----------- Suspicious Entries ----------
-
-10:25 Failed login attempt - User: unknown
-10:27 Failed login attempt - User: unknown
-10:30 Suspicious connection detected
-10:35 Unauthorized access attempt
-10:45 Malware detected in system
-
-==============================================
-```
-
----
-
-## 🔐 Cybersecurity Concepts
-
-This project provides an introduction to:
-
-* **Digital Forensics**
-* **Log Analysis**
-* **Security Event Detection**
-* **Incident Investigation**
-* **Authentication Monitoring**
-* **Suspicious Activity Identification**
-
-Log analysis is an important part of cybersecurity investigations because security logs can provide information about events occurring on a system.
-
----
-
-## ⚠️ Disclaimer
-
-This project is created for **educational and cybersecurity learning purposes**. It performs basic keyword-based analysis of locally provided log files and is not intended to replace professional digital forensic investigation tools.
-
----
-
-## 🔮 Future Improvements
-
-Possible future enhancements include:
-
-* Add timestamps and date filtering.
-* Support CSV and other log formats.
-* Add IP address analysis.
-* Detect repeated login attempts from the same IP.
-* Add severity levels such as Low, Medium, and High.
-* Create graphical reports.
-* Add file hashing for basic evidence integrity checking.
-* Add more advanced log-analysis rules.
-
----
+- Interactive command-line menu
+- More robust IP address validation
+- Date and time filtering
+- Export reports to CSV or JSON
+- Improved brute-force detection with configurable thresholds
+- Graphical dashboard for event statistics
+- Integration with real system logs
+- More advanced correlation between events
 
 ## 👩‍💻 Author
 
 **Sanjana Mallick**
 
-B.Tech CSIT — Cybersecurity
+B.Tech Computer Science and Information Technology  
+Specialization: Cybersecurity
 
----
+## 📜 License
 
-## ⭐ Project Purpose
-
-This project was developed to strengthen practical knowledge of **C++ programming and cybersecurity**, particularly in the area of **digital forensics and security log analysis**.
+This project is intended for educational and cybersecurity learning purposes. Add an open-source license if you want others to reuse or modify the code under defined terms.
+security log analysis**.
