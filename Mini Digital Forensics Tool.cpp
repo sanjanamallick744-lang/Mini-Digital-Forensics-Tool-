@@ -1,149 +1,344 @@
+
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <vector>
+#include <map>
 #include <cctype>
+#include <ctime>
+#include <cstdlib>
 
 using namespace std;
 
+struct Event
+{
+    string log;
+    string category;
+    string severity;
+    string ip;
+    string recommendation;
+    int risk;
+};
+
+string toLowerCase(string text)
+{
+    for (unsigned int i = 0; i < text.length(); i++)
+        text[i] = tolower((unsigned char)text[i]);
+
+    return text;
+}
+
+string findIP(string text)
+{
+    for (unsigned int i = 0; i < text.length(); i++)
+    {
+        if (!isdigit((unsigned char)text[i]))
+            continue;
+
+        unsigned int j = i;
+
+        while (j < text.length() &&
+              (isdigit((unsigned char)text[j]) || text[j] == '.'))
+            j++;
+
+        string candidate = text.substr(i, j - i);
+
+        int dots = 0, parts = 0;
+        bool valid = true;
+        unsigned int start = 0;
+
+        for (unsigned int k = 0; k <= candidate.length(); k++)
+        {
+            if (k == candidate.length() || candidate[k] == '.')
+            {
+                if (k == start)
+                {
+                    valid = false;
+                    break;
+                }
+
+                string part = candidate.substr(start, k - start);
+
+                if (part.length() > 3 || atoi(part.c_str()) > 255)
+                    valid = false;
+
+                parts++;
+                start = k + 1;
+            }
+
+            if (k < candidate.length() && candidate[k] == '.')
+                dots++;
+        }
+
+        if (valid && dots == 3 && parts == 4)
+            return candidate;
+
+        i = j;
+    }
+
+    return "Not found";
+}
+
+Event analyzeLog(string line)
+{
+    Event e;
+    string text = toLowerCase(line);
+
+    e.log = line;
+    e.category = "Normal Activity";
+    e.severity = "INFO";
+    e.ip = findIP(line);
+    e.recommendation = "No immediate action required.";
+    e.risk = 0;
+
+    if (text.find("ransomware") != string::npos ||
+        text.find("data exfiltration") != string::npos)
+    {
+        e.category = "Ransomware / Data Exfiltration";
+        e.severity = "CRITICAL";
+        e.recommendation =
+            "Escalate immediately; investigate affected systems.";
+        e.risk = 40;
+    }
+    else if (text.find("privilege escalation") != string::npos ||
+             text.find("root access") != string::npos)
+    {
+        e.category = "Privilege Escalation";
+        e.severity = "HIGH";
+        e.recommendation =
+            "Review account permissions and authentication logs.";
+        e.risk = 30;
+    }
+    else if (text.find("malware") != string::npos ||
+             text.find("attack") != string::npos)
+    {
+        e.category = "Malware / Attack Indicator";
+        e.severity = "HIGH";
+        e.recommendation =
+            "Investigate the source and examine affected systems.";
+        e.risk = 25;
+    }
+    else if (text.find("unauthorized") != string::npos ||
+             text.find("suspicious") != string::npos)
+    {
+        e.category = "Suspicious / Unauthorized Activity";
+        e.severity = "MEDIUM";
+        e.recommendation =
+            "Verify the activity and review access records.";
+        e.risk = 15;
+    }
+    else if (text.find("failed login") != string::npos ||
+             text.find("login failed") != string::npos)
+    {
+        e.category = "Failed Login";
+        e.severity = "LOW";
+        e.recommendation =
+            "Monitor repeated failures and verify the user.";
+        e.risk = 5;
+    }
+
+    return e;
+}
+
 int main()
 {
+    vector<string> logs;
+    vector<Event> events;
+    map<string, int> failedByIP;
+
     string line;
-    string lowerLine;
+    ifstream inputFile("forensic_log.txt");
 
-    int totalEntries = 0;
-    int failedLogin = 0;
-    int suspicious = 0;
-    int unauthorized = 0;
-    int malware = 0;
-    int attack = 0;
-    int suspiciousEvents = 0;
-
-    /* Sample forensic log data */
-    string logs[] =
+    if (inputFile)
     {
-        "10:20 Login successful - User: admin",
-        "10:25 Failed login attempt - User: unknown",
-        "10:27 Failed login attempt - User: unknown",
-        "10:30 Suspicious connection detected",
-        "10:35 Unauthorized access attempt",
-        "10:40 Login successful - User: sanjana",
-        "10:45 Malware detected in system",
-        "10:50 Normal system activity",
-        "10:55 Attack detected from unknown source",
-        "11:00 Login successful - User: admin"
-    };
-
-    int totalLogs = 10;
-
-    ofstream reportFile;
-    reportFile.open("forensic_report.txt");
-
-    cout << "==========================================" << endl;
-    cout << "       MINI DIGITAL FORENSICS TOOL        " << endl;
-    cout << "==========================================" << endl;
-    cout << endl;
-
-    cout << "Analyzing forensic logs..." << endl;
-    cout << endl;
-
-    reportFile << "==========================================" << endl;
-    reportFile << "       DIGITAL FORENSICS REPORT           " << endl;
-    reportFile << "==========================================" << endl;
-    reportFile << endl;
-
-    reportFile << "Suspicious Log Entries:" << endl;
-    reportFile << "------------------------------------------" << endl;
-
-    for (int i = 0; i < totalLogs; i++)
-    {
-        line = logs[i];
-        totalEntries++;
-
-        lowerLine = line;
-
-        /* Convert text to lowercase */
-        for (unsigned int j = 0; j < lowerLine.length(); j++)
+        while (getline(inputFile, line))
         {
-            lowerLine[j] = tolower(lowerLine[j]);
+            if (!line.empty())
+                logs.push_back(line);
         }
 
-        bool isSuspicious = false;
+        inputFile.close();
+        cout << "Source: forensic_log.txt" << endl;
+    }
+    else
+    {
+        logs.push_back("10:20 Login successful - User: admin - IP: 192.168.1.10");
+        logs.push_back("10:25 Failed login - User: unknown - IP: 203.0.113.15");
+        logs.push_back("10:26 Failed login - User: unknown - IP: 203.0.113.15");
+        logs.push_back("10:27 Failed login - User: unknown - IP: 203.0.113.15");
+        logs.push_back("10:30 Suspicious connection - IP: 198.51.100.8");
+        logs.push_back("10:35 Unauthorized access attempt - IP: 198.51.100.8");
+        logs.push_back("10:40 Login successful - User: sanjana - IP: 192.168.1.12");
+        logs.push_back("10:45 Malware detected on workstation");
+        logs.push_back("10:50 Normal system activity");
+        logs.push_back("10:55 Attack detected from unknown source");
+        logs.push_back("11:00 Privilege escalation detected - User: guest");
+        logs.push_back("11:05 Ransomware indicator detected");
+        logs.push_back("11:10 Data exfiltration alert");
 
-        if (lowerLine.find("failed login") != string::npos)
+        cout << "Source: Built-in sample logs" << endl;
+    }
+
+    ofstream reportFile("forensic_report.txt");
+
+    if (!reportFile)
+    {
+        cout << "Error: Cannot create forensic_report.txt" << endl;
+        return 1;
+    }
+
+    int failed = 0, suspicious = 0, unauthorized = 0;
+    int malware = 0, attacks = 0, critical = 0;
+    int bruteForce = 0, privilege = 0, exfiltration = 0;
+    int totalRisk = 0;
+
+    for (unsigned int i = 0; i < logs.size(); i++)
+    {
+        Event e = analyzeLog(logs[i]);
+
+        if (e.category == "Failed Login")
         {
-            failedLogin++;
-            isSuspicious = true;
+            failed++;
+
+            if (e.ip != "Not found")
+                failedByIP[e.ip]++;
         }
 
-        if (lowerLine.find("suspicious") != string::npos)
-        {
+        if (e.category == "Suspicious / Unauthorized Activity")
             suspicious++;
-            isSuspicious = true;
-        }
 
-        if (lowerLine.find("unauthorized") != string::npos)
-        {
+        if (toLowerCase(logs[i]).find("unauthorized") != string::npos)
             unauthorized++;
-            isSuspicious = true;
-        }
 
-        if (lowerLine.find("malware") != string::npos)
-        {
+        if (toLowerCase(logs[i]).find("malware") != string::npos ||
+            toLowerCase(logs[i]).find("ransomware") != string::npos)
             malware++;
-            isSuspicious = true;
+
+        if (toLowerCase(logs[i]).find("attack") != string::npos)
+            attacks++;
+
+        if (e.category == "Privilege Escalation")
+            privilege++;
+
+        if (e.category == "Ransomware / Data Exfiltration")
+        {
+            critical++;
+
+            if (toLowerCase(logs[i]).find("data exfiltration") != string::npos)
+                exfiltration++;
         }
 
-        if (lowerLine.find("attack") != string::npos)
-        {
-            attack++;
-            isSuspicious = true;
-        }
+        totalRisk += e.risk;
+        events.push_back(e);
+    }
 
-        if (isSuspicious)
+    // Detect repeated failed logins from the same IP.
+    for (map<string, int>::iterator it = failedByIP.begin();
+         it != failedByIP.end(); ++it)
+    {
+        if (it->second >= 3)
         {
-            suspiciousEvents++;
-            reportFile << line << endl;
+            bruteForce++;
+
+            Event e;
+            e.log = "Repeated failed logins from " + it->first +
+                    " (" + to_string(it->second) + " attempts)";
+            e.category = "Possible Brute-Force Activity";
+            e.severity = "HIGH";
+            e.ip = it->first;
+            e.recommendation =
+                "Verify the source, review authentication records, "
+                "and apply appropriate account protections.";
+            e.risk = 30;
+
+            events.push_back(e);
+            totalRisk += e.risk;
         }
     }
 
-    cout << "---------- ANALYSIS RESULTS ----------" << endl;
-    cout << endl;
+    time_t now = time(0);
+    char *timeText = ctime(&now);
+    string timestamp = timeText ? timeText : "Unknown";
 
-    cout << "Total Log Entries       : " << totalEntries << endl;
-    cout << "Suspicious Events       : " << suspiciousEvents << endl;
-    cout << "Failed Login Attempts   : " << failedLogin << endl;
-    cout << "Suspicious Activities   : " << suspicious << endl;
-    cout << "Unauthorized Access     : " << unauthorized << endl;
-    cout << "Malware Events          : " << malware << endl;
-    cout << "Attack Events           : " << attack << endl;
+    int suspiciousCount = 0;
+    for (unsigned int i = 0; i < events.size(); i++)
+    {
+        if (events[i].risk > 0)
+            suspiciousCount++;
+    }
 
-    reportFile << endl;
-    reportFile << "---------- SUMMARY ----------" << endl;
-    reportFile << endl;
+    cout << "\n========================================\n";
+    cout << "     DIGITAL FORENSICS ANALYZER\n";
+    cout << "========================================\n";
+    cout << "Report time: " << timestamp;
+    cout << "Total log entries: " << logs.size() << endl;
+    cout << "Suspicious events: " << suspiciousCount << endl;
+    cout << "Failed logins: " << failed << endl;
+    cout << "Possible brute-force sources: " << bruteForce << endl;
+    cout << "Unauthorized events: " << unauthorized << endl;
+    cout << "Malware indicators: " << malware << endl;
+    cout << "Attack indicators: " << attacks << endl;
+    cout << "Privilege escalation: " << privilege << endl;
+    cout << "Critical-category events: " << critical << endl;
+    cout << "Data exfiltration indicators: " << exfiltration << endl;
+    cout << "Aggregate risk score: " << totalRisk << endl;
 
-    reportFile << "Total Log Entries       : " << totalEntries << endl;
-    reportFile << "Suspicious Events       : " << suspiciousEvents << endl;
-    reportFile << "Failed Login Attempts   : " << failedLogin << endl;
-    reportFile << "Suspicious Activities   : " << suspicious << endl;
-    reportFile << "Unauthorized Access     : " << unauthorized << endl;
-    reportFile << "Malware Events          : " << malware << endl;
-    reportFile << "Attack Events           : " << attack << endl;
+    reportFile << "========================================\n";
+    reportFile << "       DIGITAL FORENSICS REPORT\n";
+    reportFile << "========================================\n";
+    reportFile << "Generated: " << timestamp;
+    reportFile << "Total log entries: " << logs.size() << endl;
+    reportFile << "Suspicious events: " << suspiciousCount << endl;
+    reportFile << "Failed logins: " << failed << endl;
+    reportFile << "Possible brute-force sources: " << bruteForce << endl;
+    reportFile << "Unauthorized events: " << unauthorized << endl;
+    reportFile << "Malware indicators: " << malware << endl;
+    reportFile << "Attack indicators: " << attacks << endl;
+    reportFile << "Privilege escalation: " << privilege << endl;
+    reportFile << "Critical-category events: " << critical << endl;
+    reportFile << "Data exfiltration indicators: " << exfiltration << endl;
+    reportFile << "Aggregate risk score: " << totalRisk << endl;
 
-    reportFile << endl;
-    reportFile << "==========================================" << endl;
-    reportFile << "       END OF FORENSICS REPORT            " << endl;
-    reportFile << "==========================================" << endl;
+    reportFile << "\n========== EVENT DETAILS ==========\n";
+
+    for (unsigned int i = 0; i < events.size(); i++)
+    {
+        if (events[i].risk == 0)
+            continue;
+
+        reportFile << "\nEvent: " << events[i].log << endl;
+        reportFile << "Category: " << events[i].category << endl;
+        reportFile << "Severity: " << events[i].severity << endl;
+        reportFile << "IP Address: " << events[i].ip << endl;
+        reportFile << "Risk Points: " << events[i].risk << endl;
+        reportFile << "Recommendation: "
+                   << events[i].recommendation << endl;
+    }
+
+    reportFile << "\n========== FAILED LOGIN SOURCES ==========\n";
+
+    for (map<string, int>::iterator it = failedByIP.begin();
+         it != failedByIP.end(); ++it)
+    {
+        reportFile << it->first << " : " << it->second
+                   << " failed login attempts";
+
+        if (it->second >= 3)
+            reportFile << " - REVIEW REQUIRED";
+
+        reportFile << endl;
+    }
+
+    reportFile << "\nNote: These are rule-based indicators, not proof "
+               << "of a confirmed attack.\n";
+    reportFile << "========================================\n";
+    reportFile << "             END OF REPORT\n";
+    reportFile << "========================================\n";
 
     reportFile.close();
 
-    cout << endl;
-    cout << "Analysis completed successfully!" << endl;
-    cout << "Report saved as forensic_report.txt" << endl;
-
-    cout << endl;
-    cout << "Press any key to exit..." << endl;
-
-    cin.get();
+    cout << "\nReport saved to forensic_report.txt" << endl;
+    cout << "Analysis completed successfully." << endl;
 
     return 0;
 }
